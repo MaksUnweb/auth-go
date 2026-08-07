@@ -1,0 +1,22 @@
+services: 
+# Основная база данных:
+  postgres-db:
+    container_name: postgres-db
+    image: postgres:18.4-trixie
+    ports: 
+      - "5432:5432"
+    volumes:
+      - ./db:/var/lib/postgres
+    environment: 
+      POSTGRES_USER: Admin
+      POSTGRES_PASSWORD: 1111
+      POSTGRES_DB: auth_db
+
+# База данных для хранения сессий:
+  redis-db:
+    container_name: redis-db
+    image: redis:7.4.10-bookworm
+    ports: 
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=1111

@@ -1,0 +1,8 @@
+CREATE TABLE admins(
+  id BIGSERIAL PRIMARY KEY, 
+  login VARCHAR(100) NOT NULL,
+  password VARCHAR(150) NOT NULL
+)
+
+
+
