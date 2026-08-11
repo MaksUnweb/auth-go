@@ -4,16 +4,17 @@ import (
 	"log"
 	"net"
 
-	"auth-server/internal"
 	pb "auth-server/authService/auth"
+	"auth-server/internal"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 )
 
 
 
-func StartServer(pool *pgxpool.Pool) {
+func StartServer(pool *pgxpool.Pool, redis *redis.Client, JWTSecret string) {
 
 	lis, err := net.Listen("tcp", ":50051")	
 	if err != nil {
@@ -23,6 +24,8 @@ func StartServer(pool *pgxpool.Pool) {
 	//Создаём экземпляр структуры сервера аутентификации:
 	authServer := &internal.AuthServer{
 		PostgresPool: pool,
+		RedisClient: redis,
+		JWTSecret: JWTSecret,
 	}
 
 

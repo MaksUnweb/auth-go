@@ -3,9 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
-
-	"admin-web/handlers"
-	"admin-web/handlers/api"
+	"admin-web/internal/handlers"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -27,14 +25,15 @@ func main() {
 
 	
 
-	http.HandleFunc("/", handlers.HomeHandler)
-	http.HandleFunc("/login", handlers.LoginHandler)
-	http.HandleFunc("/login-api", func(w http.ResponseWriter, r *http.Request) {
-			api.LoginApi(w, r, client)	
+	// Основные маршруты. 
+	//  /login имеет 2 разных обработчика, так как помимо страндартного адреса с GET-параметром есть ещё и POST для обработки значений формы
+	http.HandleFunc("GET /{$}", handlers.HomeHandler)
+	http.HandleFunc("GET /login", handlers.LoginHandler)
+	http.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
+			handlers.LoginPost(w, r, client)	
 	})
-	http.HandleFunc("/admin", handlers.AdminHandler)
+	http.HandleFunc("GET /admin", handlers.AdminHandler)
 
-	log.Println("Запуск веб-сервера...")
+	log.Println("Запуск веб-сервера на порту :8080...")
 	http.ListenAndServe(":8080", nil)
 }
-

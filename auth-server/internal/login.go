@@ -17,6 +17,7 @@ import (
 
 
 type Admin struct {
+	AdminID string
 	Login string 
 	Password string	
 }
@@ -31,7 +32,7 @@ func (s *AuthServer) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRe
 		return nil, status.Error(codes.InvalidArgument, "Логин или пароль не валидный!")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	//Получаю данные из бд об администраторе:
@@ -50,7 +51,14 @@ func (s *AuthServer) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRe
 		return nil, status.Error(codes.Unauthenticated, "Incrorrect login or password!")
 	}
 	
-	return &pb.LoginReply{Token: "test-token!!wqe"}, nil
+	// Запускаем функцию для работы с сессиями:
+	// Это действие генерирует JWT-токен и вносит в Redis данные JTI и userID как значение сессии: 
+	token, err := pkg.SessionPush(ctx, admin.AdminID, s.JWTSecret, s.RedisClient)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Internal server error!")
+	}
+	
+	return &pb.LoginReply{Token: token}, nil
 }
 
 
@@ -77,6 +85,6 @@ func validateLogin(login string) bool {
 //Функция проверки в базе данных:
 func checkInDb(login string, pool *pgxpool.Pool, ctx context.Context) (*Admin, error) {
 	var adminStruct Admin 
-	err := pool.QueryRow(ctx, "SELECT login, password FROM admins WHERE login = $1", login).Scan(&adminStruct.Login, &adminStruct.Password)
+	err := pool.QueryRow(ctx, "SELECT admin_id login, password FROM admins WHERE login = $1", login).Scan(&adminStruct.Login, &adminStruct.Password)
 	return &adminStruct, err
 }
