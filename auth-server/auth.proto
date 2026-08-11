@@ -8,15 +8,26 @@ option go_package = "./auth";
 
 service Auth {
   rpc Login(LoginRequest) returns (LoginReply);
+  rpc CheckAuth(CheckAuthRequest) returns (CheckAuthResponse);
 }
 
+// Запрос и ответ для функционала входа (Login):
 message LoginRequest {
   string login = 1;
   string password = 2;
 }
 
 message LoginReply {
-  string token = 3;
+  string token = 1;
 }
 
+// Запрос и ответ для функционала проверки входа/токена (CheckAuth): 
+message CheckAuthRequest {
+    string token = 1;
+}
 
+message CheckAuthResponse {
+    bool is_auth = 1; 
+    string admin_id = 2; 
+    string login = 3;
+}

@@ -26,7 +26,7 @@ func main() {
 	
 
 	// Основные маршруты. 
-	//  /login имеет 2 разных обработчика, так как помимо страндартного адреса с GET-параметром есть ещё и POST для обработки значений формы
+	// /login имеет 2 разных обработчика, так как помимо страндартного адреса с GET-параметром есть ещё и POST для обработки значений формы
 	http.HandleFunc("GET /{$}", handlers.HomeHandler)
 	http.HandleFunc("GET /login", handlers.LoginHandler)
 	http.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {

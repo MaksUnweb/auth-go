@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Auth_Login_FullMethodName = "/auth.Auth/Login"
+	Auth_Login_FullMethodName     = "/auth.Auth/Login"
+	Auth_CheckAuth_FullMethodName = "/auth.Auth/CheckAuth"
 )
 
 // AuthClient is the client API for Auth service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthClient interface {
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginReply, error)
+	CheckAuth(ctx context.Context, in *CheckAuthRequest, opts ...grpc.CallOption) (*CheckAuthResponse, error)
 }
 
 type authClient struct {
@@ -47,11 +49,22 @@ func (c *authClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.C
 	return out, nil
 }
 
+func (c *authClient) CheckAuth(ctx context.Context, in *CheckAuthRequest, opts ...grpc.CallOption) (*CheckAuthResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckAuthResponse)
+	err := c.cc.Invoke(ctx, Auth_CheckAuth_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServer is the server API for Auth service.
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility.
 type AuthServer interface {
 	Login(context.Context, *LoginRequest) (*LoginReply, error)
+	CheckAuth(context.Context, *CheckAuthRequest) (*CheckAuthResponse, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -64,6 +77,9 @@ type UnimplementedAuthServer struct{}
 
 func (UnimplementedAuthServer) Login(context.Context, *LoginRequest) (*LoginReply, error) {
 	return nil, status.Error(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedAuthServer) CheckAuth(context.Context, *CheckAuthRequest) (*CheckAuthResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CheckAuth not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 func (UnimplementedAuthServer) testEmbeddedByValue()              {}
@@ -104,6 +120,24 @@ func _Auth_Login_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_CheckAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckAuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).CheckAuth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_CheckAuth_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).CheckAuth(ctx, req.(*CheckAuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Auth_ServiceDesc is the grpc.ServiceDesc for Auth service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +148,10 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _Auth_Login_Handler,
+		},
+		{
+			MethodName: "CheckAuth",
+			Handler:    _Auth_CheckAuth_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
