@@ -50,7 +50,7 @@ func LoginPost(w http.ResponseWriter, req *http.Request, client pb.AuthClient) {
 		Name: "session",
 		Value: resp.Token,
 		Path: "/",
-		Expires: time.Now().Add(15 * time.Second),
+		Expires: time.Now().Add(1 * time.Hour),
 		HttpOnly: true,
 		Secure: false,
 		SameSite: http.SameSiteLaxMode,

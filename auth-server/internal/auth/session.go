@@ -1,4 +1,4 @@
-package pkg
+package auth
 
 import (
 	"context"
@@ -31,9 +31,9 @@ func SessionPush(ctx context.Context, userID string, secret string, rdb *redis.C
 // Функция для внесения сессии в Redis:
 // Принимает JTI, который и является полезной нагрузкой сессии
 func InsertSession(JTI, userID string, rdb *redis.Client, ctx context.Context) error {
-	status := rdb.Set(ctx, "session:"+ JTI, userID, 15*time.Second)
+	status := rdb.Set(ctx, "session:"+ JTI, userID, 1*time.Hour)
 	if status.Err() != nil {
-	 	log.Printf("Error set value into Redis: %w", status.Args()...)
+	 	log.Printf("Error set value into Redis: %v", status.Args()...)
 		return status.Err()
 	}
 	return nil

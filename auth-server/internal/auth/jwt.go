@@ -1,8 +1,9 @@
-package pkg
+package auth
 
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"time"
 
@@ -11,6 +12,13 @@ import (
 
 type JWT struct {
 	JWT string 
+	SessionID string
+}
+
+
+// Структура для хранения данных из JWT-токена
+type JWTValues struct {
+	AdminID string 
 	SessionID string
 }
 
@@ -28,7 +36,7 @@ func GenerateToken(userID string, secret string) (*JWT, error) {
 		"sub": userID,
 		"jti": sessionID, 
 		"iat": time.Now().Unix(), 
-		"exp": time.Now().Add(15 * time.Second).Unix(),
+		"exp": time.Now().Add(1 * time.Hour).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(secret))
 	JWTStruct := &JWT{
@@ -38,6 +46,27 @@ func GenerateToken(userID string, secret string) (*JWT, error) {
 	return JWTStruct, err
 }
 
+
+// Верификация токена:
+func VerifyJWT(tokenString, secret string) (*JWTValues, error) {
+	claims := &jwt.RegisteredClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (any, error) {
+		return []byte(secret), nil
+	}, jwt.WithLeeway(5*time.Second))
+
+	if err != nil {
+		return nil, fmt.Errorf("Error Verivication token: %w", err)
+	}
+
+	if !token.Valid {
+		return nil, fmt.Errorf("Token not valide!")
+	}
+	
+	return &JWTValues{
+		AdminID: claims.Subject,
+		SessionID: claims.ID,
+	}, nil
+}
 
 //Генерация UUID сессии:
 func generateSessionID() (string, error){
@@ -49,9 +78,4 @@ func generateSessionID() (string, error){
 	}
 
 	return hex.EncodeToString(sessionID), nil
-}
-
-
-func VerifyToken() {
-	
 }

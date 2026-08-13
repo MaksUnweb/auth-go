@@ -7,14 +7,16 @@ package main
 import (
 	"context"
 	"log"
+	"net"
 	"os"
 	"strconv"
 
-	"auth-server/server"
-
+	"auth-server/internal"
+	pb "auth-server/authService/auth"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc"
 )
 
 
@@ -63,6 +65,30 @@ func main() {
 	}
 	
 	//Запускаем сервер:
-	server.StartServer(pool, rdb, JWTSecret)
+	StartServer(pool, rdb, JWTSecret)
+
+}
+
+
+func StartServer(pool *pgxpool.Pool, redis *redis.Client, JWTSecret string) {
+
+	lis, err := net.Listen("tcp", ":50051")	
+	if err != nil {
+		log.Fatalf("Ошибка создания слушателя порта :50051: %v", err)
+	}
+
+	//Создаём экземпляр структуры сервера аутентификации:
+	authServer := &internal.AuthServer{
+		PostgresPool: pool,
+		RedisClient: redis,
+		JWTSecret: JWTSecret,
+	}
+
+
+	grpcServer := grpc.NewServer()
+	pb.RegisterAuthServer(grpcServer, authServer)
+
+	log.Println("Запуск grpc-севрера...")
+	grpcServer.Serve(lis)
 
 }
