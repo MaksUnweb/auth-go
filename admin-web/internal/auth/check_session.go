@@ -6,9 +6,8 @@ import (
 )
 
 
-//Функция для проверки сессии. 
 // Получает данные из Cokie (JWT-токен)
-func CheckSession(w http.ResponseWriter, req *http.Request) (string, error) {
+func GetSession(req *http.Request) (string, error) {
 
 	cookie, err := req.Cookie("session")
 	if err != nil {

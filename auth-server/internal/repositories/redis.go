@@ -25,3 +25,17 @@ func CheckRedisSession(ctx context.Context, sessionID, userID string, rdb *redis
 	
 	return nil
 }
+
+
+// Функция для удаления сессии из Redis: 
+func DelRedisSession(ctx context.Context, sessionID string, rdb *redis.Client) error {
+	key := "session:" + sessionID
+	err := rdb.Del(ctx, key).Err() 
+	if err != nil {
+		if err != redis.Nil {
+			log.Printf("Error request from Redis: %v", err)
+		}
+	}
+
+	return err
+}

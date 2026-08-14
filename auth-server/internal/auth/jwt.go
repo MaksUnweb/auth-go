@@ -3,12 +3,17 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+
+var ErrInvalidToken = errors.New("invalid token")
+
 
 type JWT struct {
 	JWT string 
@@ -59,7 +64,7 @@ func VerifyJWT(tokenString, secret string) (*JWTValues, error) {
 	}
 
 	if !token.Valid {
-		return nil, fmt.Errorf("Token not valide!")
+		return nil, ErrInvalidToken
 	}
 	
 	return &JWTValues{

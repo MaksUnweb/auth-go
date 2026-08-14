@@ -2,10 +2,10 @@ package main
 
 import (
 	"log"
-	
-	"net/http"
-	"admin-web/internal/handlers"
+
 	"admin-web/internal/auth"
+	"admin-web/internal/handlers"
+	"net/http"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -36,20 +36,9 @@ func main() {
 	mux.Handle("GET /admin", 
 		auth.AuthMiddleware(http.HandlerFunc(handlers.AdminHandler), client),
 	)
-	
-
-	// Основные маршруты. 
-	// /login имеет 2 разных обработчика, так как помимо страндартного адреса с GET-параметром есть ещё и POST для обработки значений формы
-	// http.HandleFunc("GET /{$}", handlers.HomeHandler)
-	// http.HandleFunc("GET /login", handlers.LoginHandler)
-	// http.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
-	// 		handlers.LoginPost(w, r, client)	
-	// })
-	// // http.HandleFunc("GET /admin", handlers.AdminHandler)
-	//  http.HandleFunc("GET /admin", func(w http.ResponseWriter, r *http.Request) {
-	// 		 handlers.AdminHandler(w, r, &client)
-	// 	})
-
+	mux.HandleFunc("POST /admin/logout", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Logout(w, r, client)
+	})
 
 	server := http.Server{
 		Addr: ":8080",
