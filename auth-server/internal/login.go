@@ -39,7 +39,7 @@ func (s AuthServer) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRep
 
 	//Валидация логина и пароля:
 	if !validatePass(r.Password) || !validateLogin(r.Login) {
-		return nil, status.Error(codes.InvalidArgument, "Логин или пароль не валидный!")
+		return nil, status.Error(codes.InvalidArgument, "Login or password invalide!")
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)

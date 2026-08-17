@@ -2,6 +2,7 @@ package handlers
 
 import (
 	pb "admin-web/authService/auth"
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -9,13 +10,18 @@ import (
 	"admin-web/internal/models"
 	"admin-web/internal/response"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 
+type Loginer interface {
+	Login(ctx context.Context, in *pb.LoginRequest, opts ...grpc.CallOption) (*pb.LoginReply, error)
+}
 
-func LoginPost(w http.ResponseWriter, req *http.Request, client pb.AuthClient) {
+
+func LoginPost(w http.ResponseWriter, req *http.Request, client Loginer) {
 	if req.Method != "POST"	 {
 		response.SendResponseError(w, http.StatusMethodNotAllowed, "Method not allowed!")
 		return 
@@ -28,21 +34,37 @@ func LoginPost(w http.ResponseWriter, req *http.Request, client pb.AuthClient) {
 		response.SendResponseError(w, http.StatusBadRequest, "Bad request!")
 		return
 	}
+
+	if input.Login == "" || input.Password == "" {
+		response.SendResponseError(w, http.StatusBadRequest, "Bad request!")
+		return
+	}
 	
 	
 	resp, err := client.Login(req.Context(), &pb.LoginRequest{Login: input.Login, Password: input.Password})
-
-	if err != nil {
-		st := status.Convert(err)
-	
-		if st.Code() == codes.InvalidArgument || st.Code() == codes.Unauthenticated || st.Code() == codes.NotFound {
-			response.SendResponseError(w, http.StatusFound, "Login or password not allowed!")
-			return
-		}
-
-		// http.Redirect(w, req, "/login?error="+"Ошибка работы сервера! Попробуйте позже!", http.StatusFound)
+	if resp == nil && err == nil {
 		response.SendResponseError(w, http.StatusInternalServerError, "Internal server error!")
-		return 
+		return
+	}
+	
+	if err != nil {
+		code := status.Code(err)
+	
+		switch code{
+			case codes.InvalidArgument:
+				response.SendResponseError(w, http.StatusUnprocessableEntity, "Unprocessable Entity!")
+				return
+			case codes.Unauthenticated:
+				response.SendResponseError(w, http.StatusUnauthorized, "Unauthorized!")
+				return
+			case codes.NotFound:
+				response.SendResponseError(w, http.StatusNotFound, "Not Found!")
+				return
+			default:
+				response.SendResponseError(w, http.StatusInternalServerError, "Internal server error!")
+				return 
+		}
+		
 	}
 
 	
