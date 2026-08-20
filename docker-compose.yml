@@ -1,0 +1,85 @@
+services: 
+# Основная база данных:
+  postgres-db:
+    container_name: postgres-db
+    image: postgres:18.4-trixie
+    ports: 
+      - "5432:5432"
+    volumes:
+      - ./db:/var/lib/postgresql
+    environment: 
+      POSTGRES_USER: Admin
+      POSTGRES_PASSWORD: 1111
+      POSTGRES_DB: auth_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U Admin -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - auth-network
+        
+
+# База данных для хранения сессий:
+  redis-db:
+    container_name: redis-db
+    image: redis:7.4.10-bookworm
+    ports: 
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=1111
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "1111", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - auth-network
+
+# Сервер аутентификации (auth-server): 
+  auth-server:
+    container_name: auth-server
+    build:
+      context: ./auth-server 
+      dockerfile: Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      RDB_ADDR: ${RDB_ADDR}
+      RDB_PASSWORD: ${RDB_PASSWORD}
+      RDB_DB: ${RDB_DB}
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis-db:
+        condition: service_healthy
+    networks:
+      - auth-network
+          
+  # Админка (клиент сервера аутентификации)
+  admin-web: 
+    container_name: admin-web
+    build: 
+      context: ./admin-web
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      AUTH_SERVER_ADDR: ${AUTH_SERVER_ADDR}
+      
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis-db:
+        condition: service_healthy
+      auth-server:
+        condition: service_started
+    networks:
+      - auth-network
+    
+networks:
+  auth-network:
+    driver: bridge
